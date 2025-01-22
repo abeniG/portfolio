@@ -1,6 +1,6 @@
 {
-  "homepage": "https://abeniG.github/io/portfolio",
-  "name": "personal-portfolio",
+  "homepage": "https://abeniG.github.io/portfolio",
+  "name": "portfolio",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
