@@ -541,40 +541,63 @@ function initProjectFilter() {
     });
 }
 
-// Navigation
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-        e.preventDefault();
+// Smooth Navigation Scrolling with Active State Update
+function initSmoothNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section');
 
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
+    // Function to update active nav link
+    function updateActiveNavLink() {
+        const scrollPos = window.scrollY + 100;
 
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-            // Update active nav link
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            this.classList.add('active');
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            const sectionId = section.getAttribute('id');
 
-            // Smooth scroll to target with parallax effect
-            gsap.to(window, {
-                duration: 1.2,
-                scrollTo: {
-                    y: targetElement,
-                    offsetY: 80
-                },
-                ease: "power2.inOut"
-            });
-
-            // Close mobile menu if open
-            if (hamburger.classList.contains('active')) {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('active');
+            if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${sectionId}`) {
+                        link.classList.add('active');
+                    }
+                });
             }
-        }
+        });
+    }
+
+    // Update active nav link on scroll
+    window.addEventListener('scroll', updateActiveNavLink);
+
+    // Smooth scroll for nav links
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                // Update active nav link immediately
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                // Smooth scroll to target
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+
+                // Close mobile menu if open
+                if (window.innerWidth <= 992) {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            }
+        });
     });
-});
+}
 
 // Mobile menu toggle
 const hamburger = document.querySelector('.hamburger');
@@ -584,16 +607,36 @@ if (hamburger && navMenu) {
     hamburger.addEventListener('click', () => {
         hamburger.classList.toggle('active');
         navMenu.classList.toggle('active');
+
+        // Prevent body scroll when menu is open
+        if (navMenu.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
     });
 }
+
+// Close mobile menu when clicking on a link
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 992) {
+            hamburger.classList.remove('active');
+            navMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
 
 // Close mobile menu when clicking outside
 document.addEventListener('click', (e) => {
     if (hamburger && navMenu &&
         !hamburger.contains(e.target) &&
-        !navMenu.contains(e.target)) {
+        !navMenu.contains(e.target) &&
+        window.innerWidth <= 992) {
         hamburger.classList.remove('active');
         navMenu.classList.remove('active');
+        document.body.style.overflow = '';
     }
 });
 
@@ -603,31 +646,12 @@ window.addEventListener('scroll', () => {
     if (navbar) {
         if (window.scrollY > 50) {
             navbar.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+            navbar.style.backdropFilter = 'blur(10px)';
             navbar.style.boxShadow = '0 5px 20px rgba(0, 0, 0, 0.1)';
         } else {
             navbar.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
             navbar.style.boxShadow = 'none';
         }
-
-        // Update active nav link based on scroll position
-        const sections = document.querySelectorAll('section');
-        const navLinks = document.querySelectorAll('.nav-link');
-
-        let current = '';
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            if (scrollY >= sectionTop - 200) {
-                current = section.getAttribute('id');
-            }
-        });
-
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('href') === `#${current}`) {
-                link.classList.add('active');
-            }
-        });
     }
 });
 
@@ -668,18 +692,56 @@ if (contactForm) {
 
             submitBtn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
             submitBtn.style.background = 'linear-gradient(135deg, #2DD4BF, #0253B3)';
+            submitBtn.disabled = true;
 
+            // Simulate sending
             setTimeout(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.style.background = '';
-            }, 3000);
+                submitBtn.disabled = false;
 
-            // Reset form
-            contactForm.reset();
+                // Show notification
+                showNotification('Message sent successfully!', 'success');
+
+                // Reset form
+                contactForm.reset();
+            }, 2000);
         } else {
-            alert('Please fill in all fields.');
+            showNotification('Please fill in all fields.', 'error');
         }
     });
+}
+
+// Notification function
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Animate in
+    gsap.from(notification, {
+        y: -50,
+        opacity: 0,
+        duration: 0.3,
+        ease: "power2.out"
+    });
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        gsap.to(notification, {
+            y: -50,
+            opacity: 0,
+            duration: 0.3,
+            onComplete: () => {
+                notification.remove();
+            }
+        });
+    }, 3000);
 }
 
 // Initialize everything when page loads
@@ -692,6 +754,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize project filter
     initProjectFilter();
+
+    // Initialize smooth navigation
+    initSmoothNavigation();
 
     // Add hover effect to project cards
     document.querySelectorAll('.project-card').forEach(card => {
@@ -744,7 +809,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-
     // Add interactive mouse trail for floating elements
     document.addEventListener('mousemove', (e) => {
         const trail = document.createElement('div');
@@ -762,11 +826,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Add notification styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--darker-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: var(--shadow);
+            max-width: 350px;
+        }
+        
+        .notification.success {
+            border-left-color: var(--secondary-color);
+        }
+        
+        .notification.error {
+            border-left-color: #ff4757;
+        }
+        
+        .notification i {
+            font-size: 1.2rem;
+        }
+        
+        .notification.success i {
+            color: var(--secondary-color);
+        }
+        
+        .notification.error i {
+            color: #ff4757;
+        }
+        
+        @media (max-width: 768px) {
+            .notification {
+                top: 80px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 });
 
-// Add mouse trail styles dynamically
-const style = document.createElement('style');
-style.textContent = `
+// Handle window resize for mobile menu
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 992) {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+
+// Add CSS for mouse trail
+const trailStyle = document.createElement('style');
+trailStyle.textContent = `
     .mouse-trail {
         position: fixed;
         width: 8px;
@@ -778,4 +902,4 @@ style.textContent = `
         transform: translate(-50%, -50%);
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(trailStyle);
