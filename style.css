@@ -518,14 +518,72 @@ h4 {
     border-radius: 20px;
     overflow: hidden;
     box-shadow: var(--shadow);
+    position: relative;
+    z-index: 2;
+}
+
+#three-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 20px;
+}
+
+.three-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 3;
+    display: none;
+}
+
+.three-loading.active {
+    display: flex;
+}
+
+.three-loading .fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+.mobile-hint {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-align: center;
+    width: 100%;
+    z-index: 10;
+    display: none;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .mobile-hint {
+        display: block;
+    }
 }
 
 .phone-frame {
     position: absolute;
     width: 300px;
     height: 600px;
-    z-index: 2;
+    z-index: 1;
     pointer-events: none;
+    display: block;
 }
 
 .phone-body {
@@ -1998,6 +2056,54 @@ h4 {
 }
 
 
+/* Mobile-specific Three.js container */
+
+@media screen and (max-width: 768px) {
+    #three-container {
+        position: relative;
+        z-index: 2;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        margin-top: 20px;
+        height: 400px;
+    }
+    .phone-frame {
+        display: none;
+        /* Hide CSS phone on mobile */
+    }
+    .hero-visual {
+        height: 400px;
+        justify-content: center;
+    }
+    /* Enhance Three.js visibility on mobile */
+    .hero-visual canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .mobile-hint {
+        display: block;
+        font-size: 0.7rem;
+        padding: 6px 12px;
+        bottom: 10px;
+    }
+}
+
+@media screen and (min-width: 769px) {
+    #three-container {
+        opacity: 0.9;
+        transition: opacity 0.3s ease;
+    }
+    #three-container:hover {
+        opacity: 1;
+    }
+    .phone-frame {
+        display: block;
+        /* Show CSS phone on desktop */
+    }
+}
+
+
 /* Responsive Design */
 
 @media screen and (max-width: 1200px) {
@@ -2288,4 +2394,53 @@ h4 {
     pointer-events: none;
     z-index: 9999;
     transform: translate(-50%, -50%);
+}
+
+
+/* Notification styles */
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--darker-color);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    border-left: 4px solid var(--primary-color);
+    box-shadow: var(--shadow);
+    max-width: 350px;
+}
+
+.notification.success {
+    border-left-color: var(--secondary-color);
+}
+
+.notification.error {
+    border-left-color: #ff4757;
+}
+
+.notification i {
+    font-size: 1.2rem;
+}
+
+.notification.success i {
+    color: var(--secondary-color);
+}
+
+.notification.error i {
+    color: #ff4757;
+}
+
+@media (max-width: 768px) {
+    .notification {
+        top: 80px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
 }
